@@ -1,7 +1,7 @@
 {
-    "name": "moonshot-digital-advertising",
+    "name": "example-name",
     "version": "1.0.0",
-    "description": "Moonshot-Digital-Advertising contract implemented in JavaScript",
+    "description": "Basic demonstration of the concept of chaincode and smart contracts",
     "main": "index.js",
     "engines": {
         "node": ">=12",
