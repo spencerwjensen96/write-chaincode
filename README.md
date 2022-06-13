@@ -25,10 +25,10 @@ Once all the proper bianary files (see above) are installed, simply run this com
 $ ./blockchain-up.sh
 ```
 
-If you are having permission issues running the [blockchain-up.sh](test-network/blockchain-up.sh), [network.sh](test-network/network.sh), or [deployCC.sh](test-network/scripts/deployCC.sh) file, change the permissions using the following:
+If you are having permission issues running the [blockchain-up.sh](test-network/blockchain-up.sh), [network.sh](test-network/network.sh), [deployCC.sh](test-network/scripts/deployCC.sh), or [createChannel.sh](test-network/createChannel.sh) file, change the permissions using the following:
 ```
 // Mac and Linux OS
-$ chmod 755 blockchain-up.sh network.sh scripts/deployCC.sh
+$ chmod 755 blockchain-up.sh network.sh scripts/deployCC.sh scripts/createChannel.sh
 ```
 
 ## Updating the network/CC
