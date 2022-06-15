@@ -6,44 +6,19 @@
 
 'use strict';
 
-// Deterministic JSON.stringify()
 const stringify  = require('json-stringify-deterministic');
 const sortKeysRecursive  = require('sort-keys-recursive');
 const { Contract } = require('fabric-contract-api');
-//const shim = require('fabric-shim');
 
 class TxnAsset extends Contract {
 
     async InitLedger(ctx) {
-        const date = ctx.stub.getDateTimestamp();
-        //console.log(date.toString());
         const assets = [
             {
                 ID: 'asset1',
-                Name: 'MyCampaign',
-                Seller: 'Ad Space Seller',
-                Buyer: 'Ad Space Buyer',
-                TotalBudget: 1000,
-                Budget: 1000,
-                ClickPrice: 0.01,
-                ClickCount: 0,
-                ImpressionPrice: 0.0001,
-                ImpressionCount: 0,
-                PurchaseCount: 0,
-                PurchaseAmount: 0,
-                CreatedOnDate: date,
-                LastUpdated: date,
-                Status: 'ISSUED',
-                LastTxn: {
-                    Id: '',
-                    Ip: '',
-                    Domain: '',
-                    Browser: '',
-                    Device: '',
-                    PageTime: '',
-                    PagePosition: '',
-                    TxnType: 'CREATE'
-                }
+                Name: 'Asset 1',
+                Owner: 'Ad Space Seller',
+                Amount: 1000
             }
         ];
 
@@ -58,39 +33,16 @@ class TxnAsset extends Contract {
     }
 
     // CreateAsset issues a new asset to the world state with given details.
-    async CreateAsset(ctx, id, name, seller, buyer, budget, clickPrice, impressionPrice) {
+    async CreateAsset(ctx, id, name, owner, amount) {
         const exists = await this.AssetExists(ctx, id);
         if (exists) {
             throw new Error(`The asset ${id} already exists`);
         }
-        const date = ctx.stub.getDateTimestamp();
-        //date = date.toString();
         const asset = {
             ID: id,
             Name: name,
-            Seller: seller,
-            Buyer: buyer,
-            TotalBudget: budget,
-            Budget: budget,
-            ClickPrice: clickPrice,
-            ClickCount: 0,
-            ImpressionPrice: impressionPrice,
-            ImpressionCount: 0,
-            PurchaseCount: 0,
-            PurchaseAmount: 0,
-            CreatedOnDate: date,
-            LastUpdated: date,
-            Status: 'ISSUED',
-            LastTxn: {
-                Id: '',
-                Domain: '',
-                Ip: '',
-                Browser: '',
-                Device: '',
-                PageTime: '',
-                PagePosition: '',
-                TxnType: 'CREATE'
-            }
+            Owner: owner,
+            Amount: amount
         };
         //we insert data in alphabetic order using 'json-stringify-deterministic' and 'sort-keys-recursive'
         await ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(asset))));
@@ -106,33 +58,20 @@ class TxnAsset extends Contract {
         return assetJSON.toString();
     }
 
-    async UpdateAsset(ctx, id, name, seller, buyer, adjustBudget, clickPrice, impressionPrice, status) {
+    async UpdateAsset(ctx, id, name, owner, amount) {
         const exists = await this.AssetExists(ctx, id);
         if (!exists) {
             throw new Error(`The asset ${id} does not exist`);
         }
         const assetString = await this.ReadAsset(ctx, id);
         const asset = JSON.parse(assetString);
-        const date = ctx.stub.getDateTimestamp();
 
         // overwriting original asset with new asset
         const updatedAsset = {
             ID: asset.ID,
             Name: name,
-            Seller: seller,
-            Buyer: buyer,
-            TotalBudget: (asset.TotalBudget + adjustBudget),
-            Budget: (asset.Budget + adjustBudget),
-            ClickPrice: clickPrice,
-            ClickCount: asset.ClickCount,
-            ImpressionPrice: impressionPrice,
-            ImpressionCount: asset.ImpressionCount,
-            PurchaseCount: asset.PurchaseCount,
-            PurchaseAmount: asset.PurchaseAmount,
-            CreatedOnDate: asset.CreatedOnDate,
-            LastUpdated: date,
-            Status: status,
-            LastTxn: asset.LastTxn
+            Owner: owner,
+            Amount: amount
         };
         // we insert data in alphabetic order using 'json-stringify-deterministic' and 'sort-keys-recursive'
         await ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(updatedAsset))));
@@ -148,40 +87,6 @@ class TxnAsset extends Contract {
         return ctx.stub.deleteState(id);
     }
 
-    async EndCampaign(ctx, id) {
-        const exists = await this.AssetExists(ctx, id);
-        if (!exists) {
-            throw new Error(`The asset ${id} does not exist`);
-        }
-        const date = ctx.stub.getDateTimestamp();
-        let assetString = await this.ReadAsset(ctx, id);
-        let asset = JSON.parse(assetString);
-        asset.Budget = 0;
-        asset.Status = 'FINISHED';
-        asset.LastUpdated = date;
-        return ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(asset))));
-    }
-
-    async PauseCampaign(ctx, id) {
-        const exists = await this.AssetExists(ctx, id);
-        if (!exists) {
-            throw new Error(`The asset ${id} does not exist`);
-        }
-        const date = ctx.stub.getDateTimestamp();
-        let assetString = await this.ReadAsset(ctx, id);
-        let asset = JSON.parse(assetString);
-        if(asset.Status === 'PAUSED'){
-            asset.Status = 'ACTIVE';
-            asset.LastUpdated = date;
-            return ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(asset))));
-        }
-        else {
-            asset.Status = 'PAUSED';
-            asset.LastUpdated = date;
-            return ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(asset))));
-        }
-    }
-
     // AssetExists returns true when asset with given ID exists in world state.
     async AssetExists(ctx, id) {
         const assetJSON = await ctx.stub.getState(id);
@@ -189,67 +94,19 @@ class TxnAsset extends Contract {
     }
 
     // Txn Update given the id and transaction type
-    async TxnAsset(ctx, id, txnType, ip, domain, browser, device, page_time, page_position) {
+    async TxnAsset(ctx, id, newOwner) {
         const exists = await this.AssetExists(ctx, id);
         if (!exists) {
             throw new Error(`The asset ${id} does not exist`);
         }
         // overwriting original asset with new asset
-        const date = ctx.stub.getDateTimestamp();
         let assetString = await this.ReadAsset(ctx, id);
         let asset = JSON.parse(assetString);
-        let txnPrice = 0.0;
-        txnType === 'CLICK' ? txnPrice = asset.ClickPrice : txnPrice = asset.ImpressionPrice;
-        //Activate Campaign
-        if(asset.Status === 'ISSUED'){
-            asset = JSON.parse(await this.UpdateAsset(ctx, id, asset.Name, asset.Seller, asset.Buyer, 0, asset.ClickPrice, asset.ImpressionPrice, 'ACTIVE'));
-        }
-        //Active Campaign
-        if(asset.Status === 'ACTIVE' && asset.Budget >= txnPrice){
-            asset.Budget -= txnPrice;
-            if(txnType === 'CLICK'){
-                asset.ClickCount += 1;
-            }
-            else{
-                asset.ImpressionCount += 1;
-            }
-        }
-        //Last Transasction
-        else if(asset.Budget < txnPrice){
-            if(txnType === 'CLICK'){
-                asset.ClickCount += 1;
-            }
-            else{
-                asset.ImpressionCount += 1;
-            }
-            asset.Budget = 0;
-            asset.Status = 'FINISHED';
-        }
+
         asset.LastTxn.Id = ctx.stub.getTxID();
-        asset.LastTxn.Ip = ip;
-        asset.LastTxn.Domain = domain;
-        asset.LastTxn.Browser = browser;
-        asset.LastTxn.Device = device;
-        asset.LastTxn.PageTime = page_time;
-        asset.LastTxn.PagePosition = page_position;
-        asset.LastTxn.TxnType = txnType;
-        asset.LastUpdated = date;
+        asset.Owner = newOwner;
         
         // we insert data in alphabetic order using 'json-stringify-deterministic' and 'sort-keys-recursive'
-        return ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(asset))));
-    }
-
-    async SubmitPurchase(ctx,id, amount){
-        const exists = await this.AssetExists(ctx, id);
-        if (!exists) {
-            throw new Error(`The asset ${id} does not exist`);
-        }
-        const date = ctx.stub.getDateTimestamp();
-        let assetString = await this.ReadAsset(ctx, id);
-        let asset = JSON.parse(assetString);
-        asset.PurchaseCount += 1;
-        asset.PurchaseAmount += parseInt(amount);
-        asset.LastUpdated = date;
         return ctx.stub.putState(id, Buffer.from(stringify(sortKeysRecursive(asset))));
     }
 
@@ -272,10 +129,6 @@ class TxnAsset extends Contract {
             result = await iterator.next();
         }
         return JSON.stringify(allResults);
-    }
-
-    async GetBlockByNumber(ctx, channel, number) {
-        return 1;
     }
 
     async retrieveHistory(ctx, key) {
