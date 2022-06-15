@@ -8,36 +8,39 @@ To learn more about Hyperledger Fabric, visit the [Fabric documentation](https:/
 
 To use the Fabric samples, you need to download the Fabric Docker images and the Fabric CLI tools. First, make sure that you have installed all of the [Fabric prerequisites](https://hyperledger-fabric.readthedocs.io/en/latest/prereqs.html). You can then follow the instructions to [Install the Fabric Samples, Binaries, and Docker Images](https://hyperledger-fabric.readthedocs.io/en/latest/install.html) in the Fabric documentation. In addition to downloading the Fabric images and tool binaries, the Fabric samples will also be cloned to your local machine.
 
+After this setup, you should have a bin folder in your PWD. If you don't have one then you need to be sure you ran this script: 
+```
+$ curl -sSL https://bit.ly/2ysbOFE | bash -s
+```
+
 ## Test network
 
-Our network is hosted on a digital ocean server.
+This is a local network.
+
+The [Fabric test network](test-network) provides a Docker Compose-based test network with two
+Organization peers and an ordering service node. You can use it on your local machine to run the <i>example-channel</i> using the [moonshotNetwork.sh](test-network/blockchain-up.sh) file.
+
+Once all the proper bianary files (see above) are installed, simply run this command in the test-network file:
 ```
-$ ssh root@147.182.129.43
-$ #the blockchain is under /fabric-network
+$ ./blockchain-up.sh
 ```
 
-The [Fabric test network](test-network) provides a Docker Compose based test network with two
-Organization peers and an ordering service node. You can use it on your local machine to run the <i>moonshot</i> channel using the [moonshotNetwork.sh](test-network/moonshotNetwork.sh) file.
-
-Once all the bianaries are installed, simply run this command in the test-network file:
+If you are having permission issues running the [blockchain-up.sh](test-network/blockchain-up.sh), [network.sh](test-network/network.sh), [deployCC.sh](test-network/scripts/deployCC.sh), or [createChannel.sh](test-network/createChannel.sh) file, change the permissions using the following:
 ```
-$ ./moonshotNetwork.sh
+// Mac and Linux OS
+$ chmod 755 blockchain-up.sh network.sh scripts/deployCC.sh scripts/createChannel.sh
 ```
 
 ## Updating the network/CC
 
 Updating the CC and the Blockchain network is fairly simple. 
 
-First, merge the branch with the update into the ubuntu branch.
+First, go into the proper folder.
 
-Then, go into the machine root, go into the ~/fabric-network/MoonshotBlockchain folder and run the command to update from git.
-```
-$ git pull origin ubuntu
-```
-Then, once the pull is completed and you have confirmed the code has changed, run the commands:
+Then, simply run the commands:
 ```
 $ cd test-network
-$ ./moonshotNetwork.sh
+$ ./blockchain-up.sh
 ```
 This will run the executable file that starts the local network with 2 ca nodes, 2 peer nodes, and an orderer node (plus a few other containers with CC and tools). Once the network is up we need to ensure that the blockchain is running and the CC runs properly. Envoke the chainchode using the <i>peer chaincode query</i> command below. If it gives you an error saying that you need the peer bianry then we will need to run a few configuration commands.
 ```
